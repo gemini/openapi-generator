@@ -1,0 +1,37 @@
+package {{package}}
+
+{{#imports}}
+import {{import}}
+{{/imports}}
+import play.api.libs.ws.WSClient
+
+import scala.concurrent.{ExecutionContext, Future}
+
+{{#operations}}
+class {{classname}}(
+    baseUrl: String = "{{{basePath}}}",
+    wsClient: WSClient
+)(implicit ec: ExecutionContext) {
+{{#operation}}
+    // {{httpMethod.toUpperCase}} {{{path}}} {{{mediaType}}}
+    def {{operationId}}(
+        {{#allParams}}
+        {{paramName}}: {{#required}}{{dataType}}{{/required}}{{^required}}{{#isContainer}}{{dataType}}{{/isContainer}}{{^isContainer}}Option[{{dataType}}]{{/isContainer}}{{/required}}{{^defaultValue}}{{^required}}{{^isContainer}} = None{{/isContainer}}{{/required}}{{/defaultValue}}{{^-last}}, {{/-last}}
+        {{/allParams}}
+    ): Future[{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Unit{{/returnType}}] = {
+        val path = "{{{path}}}"
+                {{#pathParams}}
+                {{=<% %>=}}.replace("{<%paramName%>}", <%paramName%>)<%={{ }}=%>
+                {{/pathParams}}
+        wsClient
+            .url(s"$baseUrl$path")
+            {{#queryParams}}
+            .addQueryStringParameters({{#required}}("{{paramName}}", {{paramName}}){{/required}}{{^required}}{{paramName}}.map(p => ("{{paramName}}", p.toString)).toSeq: _*{{/required}})
+            {{/queryParams}}
+            .{{httpMethod.toLowerCase}}({{#bodyParam}}{{paramName}}{{/bodyParam}})
+            .map({{#returnType}}_.json.as[{{{returnType}}}]{{/returnType}}{{^returnType}}_ => (){{/returnType}})
+    }
+{{/operation}}
+}
+
+{{/operations}}

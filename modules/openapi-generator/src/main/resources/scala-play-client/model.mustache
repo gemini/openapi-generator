@@ -1,0 +1,27 @@
+package {{package}}
+
+{{#imports}}
+import {{import}}
+{{/imports}}
+import akka.util.ByteString
+import play.api.libs.json.{Format, Json, JsValue}
+import play.api.libs.ws.{BodyReadable, BodyWritable, InMemoryBody}
+
+{{#models}}
+{{#model}}
+case class {{classname}}(
+  {{#vars}}
+  {{#description}}
+  /* {{{description}}} */
+  {{/description}}
+  {{{name}}}: {{^required}}Option[{{/required}}{{^isEnum}}{{dataType}}{{/isEnum}}{{#isEnum}}{{classname}}Enums.{{datatypeWithEnum}}{{/isEnum}}{{^required}}] = None{{/required}}{{^-last}},{{/-last}}
+  {{/vars}}
+)
+
+object {{classname}} {
+    implicit val format{{classname}}: Format[{{classname}}] = Json.format[{{classname}}]
+    implicit val bodyReadable{{classname}}: BodyReadable[{{classname}}] = BodyReadable[{{classname}}](_.body[JsValue].as[{{classname}}])
+    implicit val bodyWriteable{{classname}}: BodyWritable[{{classname}}] = BodyWritable[{{classname}}](p => InMemoryBody(ByteString(Json.toJson(p).toString())), "application/json")
+}
+{{/model}}
+{{/models}}
